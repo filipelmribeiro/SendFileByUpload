@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VBA Code Highlighter</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/styles/agate.min.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      align-items: center;
+      min-height: 100vh;
+      background-color: #000;
+      color: #fff;
+    }
+
+    .container {
+      width: 80%;
+      max-width: 800px;
+      background-color: #000;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      margin-top: 20px;
+      position: relative;
+    }
+
+    pre {
+      padding: 15px;
+      border-radius: 5px;
+      background-color: #333;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      margin: 0;
+      color: #fff;
+    }
+
+    .copy-button {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      padding: 8px 16px;
+      font-size: 14px;
+      border: none;
+      border-radius: 5px;
+      background-color: #3498db;
+      color: #fff;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .copy-button:hover {
+      background-color: #2980b9;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <button class="copy-button" onclick="copyCode(this)">Copiar Código</button>
+    <div class="p-4 overflow-y-auto">
+      <pre><code class="!whitespace-pre hljs language-vba">
+Sub SendFileByUpload()
+    ' Declaração das variáveis
+    Dim d As String, DestURL As String, fileName As String, FilePath As String, FieldName As String, chatId As String, caption As String
+    
+    ' Definição de valores para os campos
+    FieldName = "file"
+    DestURL = "https://media.green-api.com/waInstance{{idInstance}}/sendFileByUpload/{{apiTokenInstance}}"
+    chatId = "5514981392733@c.us"
+    caption = "Essa imagem foi enviada via Green API para WhatsApp"
+    fileName = "GreenAPI.png"
+    Content = "image/png"
+    FilePath = "C:\Users\greenAPI\Downloads\" & fileName
+  
+    ' Boundary para separar os campos no formulário multipart/form-data
+    Const Boundary As String = "---------------------------0123456789012"
+  
+    ' Leitura do arquivo e obtenção do tamanho
+    Dim File, FILESIZE
+    Set ado = CreateObject("ADODB.Stream")
+    ado.Type = 1 'binary
+    ado.Open
+    ado.LoadFromFile FilePath
+    ado.Position = 0
+    FILESIZE = ado.Size
+    File = ado.Read
+    ado.Close
+  
+    ' Criação do formulário multipart/form-data
+    Set ado = CreateObject("ADODB.Stream")
+    
+    ' Montagem dos dados do formulário
+    d = "--" + Boundary + vbCrLf
+    d = d + "Content-Disposition: form-data; name=""chatId""" + vbCrLf + vbCrLf + chatId + vbCrLf
+    d = d + "--" + Boundary + vbCrLf
+    d = d + "Content-Disposition: form-data; name=""fileName""" + vbCrLf + vbCrLf + fileName + vbCrLf
+    d = d + "--" + Boundary + vbCrLf
+    d = d + "Content-Disposition: form-data; name=""caption""" + vbCrLf + vbCrLf + caption + vbCrLf
+    d = d + "--" + Boundary + vbCrLf
+    d = d + "Content-Disposition: form-data; name=""file""; filename=""" + FilePath + """" + vbCrLf
+    d = d + "Content-Type: " & Content + vbCrLf + vbCrLf
+    
+    ' Escrevendo os dados do formulário no stream
+    ado.Type = 1 'binary
+    ado.Open
+    ado.Write ToBytes(d)
+    ado.Write File
+    ado.Write ToBytes(vbCrLf + "--" + Boundary + "--" + vbCrLf)
+    ado.Position = 0
+    
+    ' Criação de uma requisição HTTP
+    With CreateObject("MSXML2.ServerXMLHTTP")
+        .Open "POST", DestURL, False
+        .setRequestHeader "Content-Type", "multipart/form-data; boundary=" & Boundary
+        .send ado.Read
+        
+        ' Verificação do status da resposta (OPCIONAL)
+        If .Status = 200 Then
+            MsgBox .responseText, vbInformation, "Sucesso: " & .Status & " - " & .statustext
+        Else
+            MsgBox .responseText, vbCritical, "Erro: " & .Status & " - " & .statustext
+        End If
+        
+    End With
+End Sub
+
+' Função para converter string em bytes
+Function ToBytes(str As String) As Variant
+    Dim ado As Object
+    Set ado = CreateObject("ADODB.Stream")
+    ado.Open
+    ado.Type = 2 ' text
+    ado.Charset = "_autodetect"
+    ado.WriteText str
+    ado.Position = 0
+    ado.Type = 1
+    ToBytes = ado.Read
+    ado.Close
+End Function
+
+      </code></pre>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/highlight.min.js"></script>
+  <script>
+    // Syntax highlighting for VBA code using highlight.js
+    document.addEventListener('DOMContentLoaded', (event) => {
+      document.querySelectorAll('code').forEach((block) => {
+        hljs.highlightElement(block);
+      });
+    });
+
+    // Function to copy the code
+    function copyCode(button) {
+      const code = document.querySelector('code');
+      const textarea = document.createElement('textarea');
+      textarea.value = code.innerText;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+
+      // Alterar o texto e o ícone do botão para "Copiado" com um ícone de check
+      button.innerHTML = 'Copiado <span>&#10003;</span>';
+
+      // Após 5 segundos, reverter o texto do botão para o original
+      setTimeout(function() {
+        button.innerHTML = 'Copiar Código';
+      }, 5000);
+    }
+  </script>
+</body>
+</html>
